@@ -5,11 +5,11 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
+#include "wifi_creds.h"
+
 WiFiClient client;
 
 const int httpPort = 80;
-const char *ssid = "hs3:lan";
-const char *password = "przyjmujemy_datki_x86";
 
 #define PIN_EN 5
 #define PIN_RS 17
@@ -100,26 +100,45 @@ StaticJsonDocument<512> getWhois()
 String requestWhois()
 {
   String payload = "";
-  const char *root_ca =
-      "-----BEGIN CERTIFICATE-----\n"
-      "MIICiTCCAg+gAwIBAgIQH0evqmIAcFBUTAGem2OZKjAKBggqhkjOPQQDAzCBhTEL\n"
-      "MAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UE\n"
-      "BxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxKzApBgNVBAMT\n"
-      "IkNPTU9ETyBFQ0MgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMDgwMzA2MDAw\n"
-      "MDAwWhcNMzgwMTE4MjM1OTU5WjCBhTELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdy\n"
-      "ZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09N\n"
-      "T0RPIENBIExpbWl0ZWQxKzApBgNVBAMTIkNPTU9ETyBFQ0MgQ2VydGlmaWNhdGlv\n"
-      "biBBdXRob3JpdHkwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAAQDR3svdcmCFYX7deSR\n"
-      "FtSrYpn1PlILBs5BAH+X4QokPB0BBO490o0JlwzgdeT6+3eKKvUDYEs2ixYjFq0J\n"
-      "cfRK9ChQtP6IHG4/bC8vCVlbpVsLM5niwz2J+Wos77LTBumjQjBAMB0GA1UdDgQW\n"
-      "BBR1cacZSBm8nZ3qQUfflMRId5nTeTAOBgNVHQ8BAf8EBAMCAQYwDwYDVR0TAQH/\n"
-      "BAUwAwEB/zAKBggqhkjOPQQDAwNoADBlAjEA7wNbeqy3eApyt4jf/7VGFAkK+qDm\n"
-      "fQjGGoe9GKhzvSbKYAydzpmfz1wPMOG+FDHqAjAU9JM8SaczepBGR7NjfRObTrdv\n"
-      "GDeAU/7dIOA1mjbRxwG55tzd8/8dLDoWV9mSOdY=\n"
-      "-----END CERTIFICATE-----\n";
+  const char *root_ca = \
+    "-----BEGIN CERTIFICATE-----"
+    "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"
+    "-----END CERTIFICATE-----";
 
   HTTPClient http;
-  http.begin("https://whois.at.hs3.pl/api/now", root_ca); //Specify the URL and certificate
+  http.begin("https://whois.at.hsp.sh/api/now", root_ca); //Specify the URL and certificate
   int httpCode = http.GET();                              //Make the request
 
   lcd.clear();
@@ -147,7 +166,7 @@ String requestWhois()
 void connect()
 {
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  WiFi.begin(SSID, PASSWD);
 
   lcd.clear();
   lcd.setCursor(0, 0);
